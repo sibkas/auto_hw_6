@@ -27,7 +27,7 @@ jobs:
 
       # 4. Запускаем SUT в фоне
       - name: Start SUT
-        run: java -jar ./artifacts/app-ibank.jar -P:profile=test &
+        run: java -jar ./artifacts/app-ibank-build-for-testers.jar &
 
       # 5. Запускаем тесты через Gradle в headless режиме
       - name: Run tests
