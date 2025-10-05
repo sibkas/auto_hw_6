@@ -28,29 +28,28 @@ public class MoneyTransferTest {
     }
 
     @Test
-    void shouldTransferMoneyBetweenOwnCards() throws InterruptedException {
-        int transferAmount = 5000;
+    void shouldTransferMoneyBetweenOwnCards() {
 
-        int balanceFirstCardBefore = dashboardPage.getCardBalance(firstCardId);
-        int balanceSecondCardBefore = dashboardPage.getCardBalance(secondCardId);
+        var firstCard = DataHelper.getFirstCardInfo();
+        var secondCard = DataHelper.getSecondCardInfo();
 
-        var transferPage = dashboardPage.selectCardToTransferByLastDigits(secondCardLastDigits);
-        dashboardPage = transferPage.transferFromCard("5559 0000 0000 0001", transferAmount);
+        int balanceFirstCardBefore = dashboardPage.getCardBalance(firstCard.getId());
+        int balanceSecondCardBefore = dashboardPage.getCardBalance(secondCard.getId());
 
-        int attempts = 0;
-        int balanceFirstCardAfter;
-        do {
-            balanceFirstCardAfter = dashboardPage.getCardBalance(firstCardId);
-            if (balanceFirstCardAfter == balanceFirstCardBefore - transferAmount) {
-                break;
-            }
-            Thread.sleep(500);
-            attempts++;
-        } while (attempts < 5);
+        int transferAmount = balanceFirstCardBefore / 2;
 
-        int balanceSecondCardAfter = dashboardPage.getCardBalance(secondCardId);
+        var transferPage = dashboardPage.selectCardToTransferByLastDigits(secondCard.getLastDigits());
+        dashboardPage = transferPage.transferFromCard(firstCard.getNumber(), transferAmount);
+
+
+        dashboardPage = dashboardPage.refresh();
+
+        int balanceFirstCardAfter = dashboardPage.getCardBalance(firstCard.getId());
+        int balanceSecondCardAfter = dashboardPage.getCardBalance(secondCard.getId());
 
         assertEquals(balanceFirstCardBefore - transferAmount, balanceFirstCardAfter);
         assertEquals(balanceSecondCardBefore + transferAmount, balanceSecondCardAfter);
     }
+
+
 }

@@ -2,9 +2,10 @@ package page;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
-
-import static com.codeborne.selenide.Selenide.$$;
-import static com.codeborne.selenide.Selenide.page;
+import com.codeborne.selenide.Condition;
+import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selenide.*;
 
 public class DashboardPage {
     private ElementsCollection cards = $$(".list__item div");
@@ -12,18 +13,27 @@ public class DashboardPage {
     private final String balanceFinish = " р.";
 
     public DashboardPage() {
+        $("[data-test-id=dashboard]").shouldBe(visible);
+    }
+
+    public DashboardPage refresh() {
+        // Нажимаем кнопку Обновить
+        SelenideElement refreshButton = $$("span.button__text")
+                .findBy(Condition.text("Обновить"));
+        refreshButton.click();
+
+        // ждём, что дашбоард обновился
+        $("[data-test-id=dashboard]").shouldBe(visible);
+
+        return this;
     }
 
     public int getCardBalance(String cardId) {
-        for (SelenideElement card : cards) {
-            String attr = card.getAttribute("data-test-id");
-            if (attr != null && attr.equals(cardId)) {
-                String text = card.text();
-                return extractBalance(text);
-            }
-        }
-        throw new IllegalArgumentException("Карты с id " + cardId + " не найдено");
+        SelenideElement card = cards.findBy(Condition.attribute("data-test-id", cardId))
+                .shouldBe(visible);
+        return extractBalance(card.text());
     }
+
 
     private int extractBalance(String text) {
         int start = text.indexOf(balanceStart);
@@ -32,14 +42,12 @@ public class DashboardPage {
         return Integer.parseInt(value);
     }
 
-    // Переход на страницу перевода с карты по последним цифрам
     public TransferPage selectCardToTransferByLastDigits(String lastDigits) {
-        for (SelenideElement card : cards) {
-            if (card.text().contains(lastDigits)) {
-                card.$("[data-test-id='action-deposit']").click(); // Клик по кнопке "Пополнить"
-                return page(TransferPage.class);
-            }
+        SelenideElement card = cards.findBy(text(lastDigits));
+        if (card == null) {
+            throw new IllegalArgumentException("Карта с последними цифрами " + lastDigits + " не найдена");
         }
-        throw new IllegalArgumentException("Карта с последними цифрами " + lastDigits + " не найдена");
+        card.$("[data-test-id='action-deposit']").click();
+        return page(TransferPage.class);
     }
 }
